@@ -58,7 +58,9 @@ public class TweetSpout extends BaseRichSpout {
 
         twitterStream.addListener(new TweetListener());
 
-        twitterStream.sample();
+        FilterQuery filterQuery = new FilterQuery();
+        filterQuery.track(new String[]{"Nike", "Adidas"});
+        twitterStream.filter(filterQuery);
     }
 
     @Override

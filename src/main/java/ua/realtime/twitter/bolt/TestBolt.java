@@ -8,6 +8,7 @@ import backtype.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Status;
+import ua.realtime.twitter.entity.ParsedTweet;
 
 import java.util.Map;
 
@@ -25,8 +26,8 @@ public class TestBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Status tweet = (Status) tuple.getValue(0);
-        LOG.info(tweet.getText());
+        ParsedTweet tweet = (ParsedTweet) tuple.getValue(0);
+        LOG.info("###-" + tweet.getUserName() + " : " + tweet.getText() + "-###");
     }
 
     @Override

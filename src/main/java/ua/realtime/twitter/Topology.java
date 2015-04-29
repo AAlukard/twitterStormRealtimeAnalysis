@@ -6,6 +6,7 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ua.realtime.twitter.bolt.ParseTweetBolt;
 import ua.realtime.twitter.bolt.TestBolt;
 import ua.realtime.twitter.spout.TweetSpout;
 import ua.realtime.twitter.util.OauthCredentials;
@@ -31,15 +32,16 @@ public class Topology {
             mode = args[0];
         }
 
-        OauthCredentials oauthCredentials = readTwitterCredetials(mode);
+        OauthCredentials oauthCredentials = readTwitterCredentials(mode);
 
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
-        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("tweet-spout");
+        builder.setBolt("parsed-tweet", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
+        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("parsed-tweet");
 
         Config conf = new Config();
-        conf.setDebug(true);
+        conf.setDebug(false);
         conf.setMaxTaskParallelism(3);
 
         LocalCluster cluster = new LocalCluster();
@@ -49,7 +51,7 @@ public class Topology {
         cluster.shutdown();
     }
 
-    private static OauthCredentials readTwitterCredetials(final String mode) throws IOException {
+    private static OauthCredentials readTwitterCredentials(final String mode) throws IOException {
         Properties prop = new Properties();
         final String propsName = mode + ".properties";
         LOG.info("Reading properties file: " + propsName);
