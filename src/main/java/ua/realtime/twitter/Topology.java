@@ -6,15 +6,20 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ua.realtime.twitter.bolt.AnalysisBolt;
 import ua.realtime.twitter.bolt.ParseTweetBolt;
 import ua.realtime.twitter.bolt.TestBolt;
+import ua.realtime.twitter.sentimental.DictionaryReader;
+import ua.realtime.twitter.sentimental.Entry;
 import ua.realtime.twitter.spout.TweetSpout;
 import ua.realtime.twitter.util.OauthCredentials;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -24,7 +29,7 @@ public class Topology {
 
     private static final Logger LOG = LoggerFactory.getLogger(Topology.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, URISyntaxException {
 
         String mode = "local";
         if (args != null && args.length > 0) {
@@ -34,11 +39,27 @@ public class Topology {
 
         OauthCredentials oauthCredentials = readTwitterCredentials(mode);
 
+        Properties prop = new Properties();
+        final String propsName = mode + ".properties";
+        LOG.info("Reading properties file: " + propsName);
+        InputStream inputStream = Topology.class.getClassLoader().getResourceAsStream(propsName);
+
+        if (inputStream != null) {
+            prop.load(inputStream);
+        } else {
+            throw new FileNotFoundException("property file '" + propsName + "' not found in the classpath");
+        }
+        DictionaryReader dictionaryReader = new DictionaryReader();
+        Map<String, Entry> dictionary =  dictionaryReader.readCsvFile(prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_PATH)
+                + "/" + prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_NAME));
+        LOG.info("Dictionary contains words: " + dictionary.size());
+
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
         builder.setBolt("parsed-tweet", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
-        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("parsed-tweet");
+        builder.setBolt("analysis-tweet", new AnalysisBolt(mode, dictionary)).shuffleGrouping("parsed-tweet");
+        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("analysis-tweet");
 
         Config conf = new Config();
         conf.setDebug(false);

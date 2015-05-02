@@ -11,6 +11,8 @@ public class Constants {
         public static final String PROPERTY_CONSUMER_SECRET = "consumer.secret";
         public static final String PROPERTY_ACCESS_TOKEN = "access.token";
         public static final String PROPERTY_ACCESS_SECRET = "access.secret";
+        public static final String PROPERTY_DICTIONARY_NAME = "dictionary.name";
+        public static final String PROPERTY_DICTIONARY_PATH = "dictionary.path";
 
     }
 }

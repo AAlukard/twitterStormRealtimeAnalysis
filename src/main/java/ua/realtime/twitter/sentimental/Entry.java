@@ -1,20 +1,23 @@
 package ua.realtime.twitter.sentimental;
 
+import java.io.Serializable;
+
 /**
  * Created by alukard on 4/29/15.
  */
-public class Entry {
+public class Entry implements Serializable {
 
+    private static final long serialVersionUID = -1189880478980586716L;
     private String word;
     private String happinessRank;
-    private String happinessAverage;
+    private Double happinessAverage;
     private String happinessStandardDeviation;
     private String twitterRank;
     private String googleRank;
     private String nytRank;
     private String lyricsRank;
 
-    public Entry(String word, String happinessRank, String happinessAverage, String happinessStandardDeviation, String twitterRank, String googleRank, String nytRank, String lyricsRank) {
+    public Entry(String word, String happinessRank, Double happinessAverage, String happinessStandardDeviation, String twitterRank, String googleRank, String nytRank, String lyricsRank) {
         this.word = word;
         this.happinessRank = happinessRank;
         this.happinessAverage = happinessAverage;
@@ -41,11 +44,11 @@ public class Entry {
         this.happinessRank = happinessRank;
     }
 
-    public String getHappinessAverage() {
+    public Double getHappinessAverage() {
         return happinessAverage;
     }
 
-    public void setHappinessAverage(String happinessAverage) {
+    public void setHappinessAverage(Double happinessAverage) {
         this.happinessAverage = happinessAverage;
     }
 

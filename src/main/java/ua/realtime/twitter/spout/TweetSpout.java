@@ -84,7 +84,7 @@ public class TweetSpout extends BaseRichSpout {
 
         @Override
         public void onStatus(Status status) {
-            LOG.info("Size of queue: {}", queue.size());
+//            LOG.info("Size of queue: {}", queue.size());
             queue.offer(status);
         }
     }
