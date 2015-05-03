@@ -15,4 +15,7 @@ public class Constants {
         public static final String PROPERTY_DICTIONARY_PATH = "dictionary.path";
 
     }
+
+    public static final String WORD_ADIDAS = "adidas";
+    public static final String WORD_NIKE = "nike";
 }

@@ -1,4 +1,4 @@
-package ua.realtime.twitter.bolt;
+package ua.realtime.twitter.sentimental;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.realtime.twitter.entity.AnalysedTweet;
 import ua.realtime.twitter.entity.ParsedTweet;
-import ua.realtime.twitter.sentimental.DictionaryReader;
-import ua.realtime.twitter.sentimental.Entry;
 
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -40,7 +38,7 @@ public class AnalysisBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple input) {
 
-        ParsedTweet parsedTweet = (ParsedTweet) input.getValue(0);
+        ParsedTweet parsedTweet = (ParsedTweet) input.getValueByField("parsed-tweet");
         StringTokenizer tokenizer = new StringTokenizer(parsedTweet.getText());
 
         int count = 0;

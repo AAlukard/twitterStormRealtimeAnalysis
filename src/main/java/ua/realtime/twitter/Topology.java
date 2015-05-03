@@ -3,10 +3,14 @@ package ua.realtime.twitter;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
+import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ua.realtime.twitter.bolt.AnalysisBolt;
+import storm.starter.bolt.RollingCountBolt;
+import ua.realtime.twitter.mentions.CountBolt;
+import ua.realtime.twitter.mentions.CountReportBolt;
+import ua.realtime.twitter.sentimental.AnalysisBolt;
 import ua.realtime.twitter.bolt.ParseTweetBolt;
 import ua.realtime.twitter.bolt.TestBolt;
 import ua.realtime.twitter.sentimental.DictionaryReader;
@@ -58,8 +62,20 @@ public class Topology {
 
         builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
         builder.setBolt("parsed-tweet", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
-        builder.setBolt("analysis-tweet", new AnalysisBolt(mode, dictionary)).shuffleGrouping("parsed-tweet");
-        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("analysis-tweet");
+
+        // counting
+        builder.setBolt("roll-count", new RollingCountBolt(20, 10)).fieldsGrouping("parsed-tweet", new Fields("term"));
+        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("roll-count");
+
+        // old counting
+//        builder.setBolt("count-bolt", new CountBolt()).fieldsGrouping("parsed-tweet", new Fields("term"));
+//        builder.setBolt("count-report-bolt", new CountReportBolt()).globalGrouping("parsed-tweet");
+
+        // Works
+//        builder.setBolt("analysis-tweet", new AnalysisBolt(dictionary)).shuffleGrouping("parsed-tweet");
+
+        // Testing
+//        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("analysis-tweet");
 
         Config conf = new Config();
         conf.setDebug(false);
