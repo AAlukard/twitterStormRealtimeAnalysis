@@ -18,15 +18,15 @@ import java.util.StringTokenizer;
 /**
  * Created by alukard on 4/30/15.
  */
-public class AnalysisBolt extends BaseRichBolt {
+public class SentimentalAnalysisBolt extends BaseRichBolt {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AnalysisBolt.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SentimentalAnalysisBolt.class);
 
     private Map<String, Entry> dictionary;
 
     private OutputCollector collector;
 
-    public AnalysisBolt(Map<String, Entry> dictionary) {
+    public SentimentalAnalysisBolt(Map<String, Entry> dictionary) {
         this.dictionary = dictionary;
     }
 
@@ -61,11 +61,13 @@ public class AnalysisBolt extends BaseRichBolt {
         tweet.setUserName(parsedTweet.getUserName());
         tweet.setSentiment(sentiment);
 
-        collector.emit(new Values(tweet));
+        String term = input.getStringByField("term");
+
+        collector.emit(new Values(term, tweet));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("analysed-tweet"));
+        declarer.declare(new Fields("term", "analysed-tweet"));
     }
 }

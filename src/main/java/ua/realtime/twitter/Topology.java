@@ -8,13 +8,12 @@ import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.starter.bolt.RollingCountBolt;
-import ua.realtime.twitter.mentions.CountBolt;
-import ua.realtime.twitter.mentions.CountReportBolt;
-import ua.realtime.twitter.sentimental.AnalysisBolt;
 import ua.realtime.twitter.bolt.ParseTweetBolt;
-import ua.realtime.twitter.bolt.TestBolt;
+import ua.realtime.twitter.mentions.CountReportBolt;
+import ua.realtime.twitter.sentimental.SentimentalAnalysisBolt;
 import ua.realtime.twitter.sentimental.DictionaryReader;
 import ua.realtime.twitter.sentimental.Entry;
+import ua.realtime.twitter.sentimental.SentimentalAnalysisReportBolt;
 import ua.realtime.twitter.spout.TweetSpout;
 import ua.realtime.twitter.util.OauthCredentials;
 
@@ -43,9 +42,38 @@ public class Topology {
 
         OauthCredentials oauthCredentials = readTwitterCredentials(mode);
 
+        Map<String, Entry> dictionary =  readSentimentalDictionary(mode);
+        LOG.debug("Dictionary contains words: " + dictionary.size());
+
+        TopologyBuilder builder = new TopologyBuilder();
+
+        builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
+        builder.setBolt("tweet-parsed", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
+
+        // counting. Actually with RollingCountBolt we show number of tweets with 'adidas' or 'nike' terms for last 20
+        // seconds every 10 seconds. It's not correct, so should be reworked
+        builder.setBolt("roll-count", new RollingCountBolt(20, 10)).fieldsGrouping("tweet-parsed", new Fields("term"));
+        builder.setBolt("count-report", new CountReportBolt()).globalGrouping("roll-count");
+
+        // sentimental
+        builder.setBolt("sentimental-analysis", new SentimentalAnalysisBolt(dictionary)).shuffleGrouping("tweet-parsed");
+        builder.setBolt("sentimental-report", new SentimentalAnalysisReportBolt(10)).globalGrouping("sentimental-analysis");
+
+        Config conf = new Config();
+        conf.setDebug(false);
+        conf.setMaxTaskParallelism(3);
+
+        LocalCluster cluster = new LocalCluster();
+        cluster.submitTopology("tweet", conf, builder.createTopology());
+        Utils.sleep(3000000);
+        cluster.killTopology("tweet");
+        cluster.shutdown();
+    }
+
+    private static Map<String, Entry> readSentimentalDictionary(final String mode) throws URISyntaxException, IOException {
         Properties prop = new Properties();
         final String propsName = mode + ".properties";
-        LOG.info("Reading properties file: " + propsName);
+        LOG.debug("Reading properties file: " + propsName);
         InputStream inputStream = Topology.class.getClassLoader().getResourceAsStream(propsName);
 
         if (inputStream != null) {
@@ -54,38 +82,9 @@ public class Topology {
             throw new FileNotFoundException("property file '" + propsName + "' not found in the classpath");
         }
         DictionaryReader dictionaryReader = new DictionaryReader();
-        Map<String, Entry> dictionary =  dictionaryReader.readCsvFile(prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_PATH)
+
+        return dictionaryReader.readCsvFile(prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_PATH)
                 + "/" + prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_NAME));
-        LOG.info("Dictionary contains words: " + dictionary.size());
-
-        TopologyBuilder builder = new TopologyBuilder();
-
-        builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
-        builder.setBolt("parsed-tweet", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
-
-        // counting
-        builder.setBolt("roll-count", new RollingCountBolt(20, 10)).fieldsGrouping("parsed-tweet", new Fields("term"));
-        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("roll-count");
-
-        // old counting
-//        builder.setBolt("count-bolt", new CountBolt()).fieldsGrouping("parsed-tweet", new Fields("term"));
-//        builder.setBolt("count-report-bolt", new CountReportBolt()).globalGrouping("parsed-tweet");
-
-        // Works
-//        builder.setBolt("analysis-tweet", new AnalysisBolt(dictionary)).shuffleGrouping("parsed-tweet");
-
-        // Testing
-//        builder.setBolt("test-bolt", new TestBolt()).globalGrouping("analysis-tweet");
-
-        Config conf = new Config();
-        conf.setDebug(false);
-        conf.setMaxTaskParallelism(3);
-
-        LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("tweet", conf, builder.createTopology());
-        Utils.sleep(300000);
-        cluster.killTopology("tweet");
-        cluster.shutdown();
     }
 
     private static OauthCredentials readTwitterCredentials(final String mode) throws IOException {

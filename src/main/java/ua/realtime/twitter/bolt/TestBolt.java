@@ -28,15 +28,7 @@ public class TestBolt extends BaseRichBolt {
 //        AnalysedTweet tweet = (AnalysedTweet) tuple.getValue(0);
 //        LOG.info("###-" + tweet.getUserName() + " : " + tweet.getText() + ":" + tweet.getSentiment() + "-###");
 
-        String term = tuple.getString(0);
-        long count = tuple.getLong(1);
-        int actualWindowLength = tuple.getInteger(2);
 
-        LOG.info("===============================");
-
-        LOG.info(String.format("Word: __%s__, count: [%d]", term, count));
-
-        LOG.info("===============================");
     }
 
     @Override
