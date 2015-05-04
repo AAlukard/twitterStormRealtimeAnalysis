@@ -50,6 +50,7 @@ public class SentimentalAnalysisReportBolt extends BaseRichBolt {
         if (TupleHelpers.isTickTuple(tuple)) {
             LOG.info("Received tick tuple, triggering emit of current sentimental map");
             publishReport();
+            termMap = new HashMap<>();
             return;
         }
 
@@ -92,7 +93,7 @@ public class SentimentalAnalysisReportBolt extends BaseRichBolt {
             Document newDoc = new Document();
             newDoc.append("term", term)
                     .append("sentiment", sentiment)
-                    .append("time", currentDate.getTime());
+                    .append("time", currentDate);
             sentimentalMessagesCollection.insertOne(newDoc);
         }
     }

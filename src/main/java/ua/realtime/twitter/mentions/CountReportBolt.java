@@ -38,7 +38,6 @@ public class CountReportBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         String term = tuple.getStringByField("obj");
         long count = tuple.getLongByField("count");
-        int actualWindowLength = tuple.getIntegerByField("actualWindowLengthInSeconds");
 
         LOG.debug("===============================");
 

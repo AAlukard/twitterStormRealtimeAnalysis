@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.starter.bolt.RollingCountBolt;
 import ua.realtime.twitter.bolt.ParseTweetBolt;
+import ua.realtime.twitter.mentions.CountBolt;
 import ua.realtime.twitter.mentions.CountReportBolt;
 import ua.realtime.twitter.sentimental.SentimentalAnalysisBolt;
 import ua.realtime.twitter.sentimental.DictionaryReader;
@@ -52,12 +53,12 @@ public class Topology {
 
         // counting. Actually with RollingCountBolt we show number of tweets with 'adidas' or 'nike' terms for last 20
         // seconds every 10 seconds. It's not correct, so should be reworked
-        builder.setBolt("roll-count", new RollingCountBolt(20, 10)).fieldsGrouping("tweet-parsed", new Fields("term"));
-        builder.setBolt("count-report", new CountReportBolt()).globalGrouping("roll-count");
+        builder.setBolt("count", new CountBolt(20)).fieldsGrouping("tweet-parsed", new Fields("term"));
+        builder.setBolt("count-report", new CountReportBolt()).globalGrouping("count");
 
         // sentimental
         builder.setBolt("sentimental-analysis", new SentimentalAnalysisBolt(dictionary)).shuffleGrouping("tweet-parsed");
-        builder.setBolt("sentimental-report", new SentimentalAnalysisReportBolt(10)).globalGrouping("sentimental-analysis");
+        builder.setBolt("sentimental-report", new SentimentalAnalysisReportBolt(20)).globalGrouping("sentimental-analysis");
 
         Config conf = new Config();
         conf.setDebug(false);
