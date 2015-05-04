@@ -22,14 +22,16 @@ public class CountReportBolt extends BaseRichBolt {
     private static final Logger LOG = LoggerFactory.getLogger(CountReportBolt.class);
 
     private MongoClient mongoClient;
-    private MongoCollection<Document> coll;
+    private MongoCollection<Document> mentionsMessagesCollection;
+    private MongoCollection<Document> mentionsStorageCollection;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 
         // add host, port and other stuff
         mongoClient = new MongoClient();
-        coll = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("mentionMessages");
+        mentionsMessagesCollection = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("mentionMessages");
+        mentionsStorageCollection = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("mentions");
     }
 
     @Override
@@ -47,8 +49,9 @@ public class CountReportBolt extends BaseRichBolt {
         Document newDoc = new Document();
         newDoc.append("term", term)
                 .append("count", count)
-                .append("time", new Date().getTime());
-        coll.insertOne(newDoc);
+                .append("time", new Date());
+        mentionsMessagesCollection.insertOne(newDoc);
+        mentionsStorageCollection.insertOne(newDoc);
     }
 
     @Override

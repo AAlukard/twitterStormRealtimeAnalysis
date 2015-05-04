@@ -65,9 +65,9 @@ public class Topology {
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("tweet", conf, builder.createTopology());
-        Utils.sleep(3000000);
-        cluster.killTopology("tweet");
-        cluster.shutdown();
+//        Utils.sleep(3000000);
+//        cluster.killTopology("tweet");
+//        cluster.shutdown();
     }
 
     private static Map<String, Entry> readSentimentalDictionary(final String mode) throws URISyntaxException, IOException {

@@ -24,7 +24,7 @@ public class SentimentalAnalysisReportBolt extends BaseRichBolt {
     private static final Logger LOG = LoggerFactory.getLogger(SentimentalAnalysisReportBolt.class);
 
     private MongoClient mongoClient;
-    private MongoCollection<Document> coll;
+    private MongoCollection<Document> sentimentalMessagesCollection;
 
     private Map<String, List<AnalysedTweet>> termMap;
 
@@ -41,7 +41,7 @@ public class SentimentalAnalysisReportBolt extends BaseRichBolt {
 
         // add host, port and other stuff
         mongoClient = new MongoClient();
-        coll = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("sentimentalMessages");
+        sentimentalMessagesCollection = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("sentimentalMessages");
     }
 
     @Override
@@ -93,7 +93,7 @@ public class SentimentalAnalysisReportBolt extends BaseRichBolt {
             newDoc.append("term", term)
                     .append("sentiment", sentiment)
                     .append("time", currentDate.getTime());
-            coll.insertOne(newDoc);
+            sentimentalMessagesCollection.insertOne(newDoc);
         }
     }
 

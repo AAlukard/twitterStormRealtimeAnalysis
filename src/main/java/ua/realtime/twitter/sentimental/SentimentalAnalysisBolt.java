@@ -7,11 +7,15 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.realtime.twitter.entity.AnalysedTweet;
 import ua.realtime.twitter.entity.ParsedTweet;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -21,6 +25,9 @@ import java.util.StringTokenizer;
 public class SentimentalAnalysisBolt extends BaseRichBolt {
 
     private static final Logger LOG = LoggerFactory.getLogger(SentimentalAnalysisBolt.class);
+
+    private MongoClient mongoClient;
+    private MongoCollection<Document> sentimentalStorageCollection;
 
     private Map<String, Entry> dictionary;
 
@@ -33,6 +40,10 @@ public class SentimentalAnalysisBolt extends BaseRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
+
+        // add host, port and other stuff
+        mongoClient = new MongoClient();
+        sentimentalStorageCollection = mongoClient.getDatabase("twitterRealTimeAnalysis").getCollection("sentimental");
     }
 
     @Override
@@ -64,6 +75,16 @@ public class SentimentalAnalysisBolt extends BaseRichBolt {
         String term = input.getStringByField("term");
 
         collector.emit(new Values(term, tweet));
+
+        persistAnalysis(term, tweet);
+    }
+
+    private void persistAnalysis(String term, AnalysedTweet tweet) {
+        Document newDoc = new Document();
+        newDoc.append("term", term)
+                .append("sentiment", tweet.getSentiment())
+                .append("time", new Date());
+        sentimentalStorageCollection.insertOne(newDoc);
     }
 
     @Override
