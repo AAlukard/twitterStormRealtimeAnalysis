@@ -5,6 +5,7 @@ import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
+import geocode.ReverseGeoCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import storm.starter.bolt.RollingCountBolt;
@@ -18,6 +19,7 @@ import ua.realtime.twitter.sentimental.SentimentalAnalysisReportBolt;
 import ua.realtime.twitter.spout.TweetSpout;
 import ua.realtime.twitter.util.OauthCredentials;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,13 +48,13 @@ public class Topology {
         Map<String, Entry> dictionary =  readSentimentalDictionary(mode);
         LOG.debug("Dictionary contains words: " + dictionary.size());
 
+        ReverseGeoCode reverseGeoCoder = getReverseGeocoder(mode);
+
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("tweet-spout", new TweetSpout(oauthCredentials));
-        builder.setBolt("tweet-parsed", new ParseTweetBolt()).shuffleGrouping("tweet-spout");
+        builder.setBolt("tweet-parsed", new ParseTweetBolt(reverseGeoCoder)).shuffleGrouping("tweet-spout");
 
-        // counting. Actually with RollingCountBolt we show number of tweets with 'adidas' or 'nike' terms for last 20
-        // seconds every 10 seconds. It's not correct, so should be reworked
         builder.setBolt("count", new CountBolt(20)).fieldsGrouping("tweet-parsed", new Fields("term"));
         builder.setBolt("count-report", new CountReportBolt()).globalGrouping("count");
 
@@ -86,6 +88,23 @@ public class Topology {
 
         return dictionaryReader.readCsvFile(prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_PATH)
                 + "/" + prop.getProperty(Constants.Twitter.PROPERTY_DICTIONARY_NAME));
+    }
+
+    private static ReverseGeoCode getReverseGeocoder(final String mode) throws IOException {
+        Properties prop = new Properties();
+        final String propsName = mode + ".properties";
+        LOG.info("Reading properties file: " + propsName);
+        InputStream inputStream = Topology.class.getClassLoader().getResourceAsStream(propsName);
+
+        if (inputStream != null) {
+            prop.load(inputStream);
+        } else {
+            throw new FileNotFoundException("property file '" + propsName + "' not found in the classpath");
+        }
+
+        String filePath = prop.getProperty(Constants.PROPERTY_GEO_FILE);
+
+        return new ReverseGeoCode(new FileInputStream(filePath), true);
     }
 
     private static OauthCredentials readTwitterCredentials(final String mode) throws IOException {

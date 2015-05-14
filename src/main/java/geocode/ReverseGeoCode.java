@@ -38,7 +38,9 @@ import java.util.ArrayList;
  * ReverseGeoCode reverseGeoCode = new ReverseGeoCode(new FileInputStream("c:\\AU.txt"), true);
  * System.out.println("Nearest to -23.456, 123.456 is " + geocode.nearestPlace(-23.456, 123.456));
  */
-public class ReverseGeoCode {
+public class ReverseGeoCode implements Serializable{
+    private static final long serialVersionUID = -5600890475463293516L;
+
     KDTree<GeoName> kdTree;
     
     // Get placenames from http://download.geonames.org/export/dump/

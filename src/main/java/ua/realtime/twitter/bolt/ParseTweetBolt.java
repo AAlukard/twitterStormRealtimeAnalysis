@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import geocode.ReverseGeoCode;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,11 @@ public class ParseTweetBolt extends BaseRichBolt {
     private static final Logger LOG = LoggerFactory.getLogger(ParseTweetBolt.class);
 
     private OutputCollector collector;
+    private ReverseGeoCode reverseGeoCoder;
+
+    public ParseTweetBolt(ReverseGeoCode reverseGeoCoder) {
+        this.reverseGeoCoder = reverseGeoCoder;
+    }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {

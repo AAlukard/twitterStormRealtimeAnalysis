@@ -18,4 +18,6 @@ public class Constants {
 
     public static final String WORD_ADIDAS = "adidas";
     public static final String WORD_NIKE = "nike";
+
+    public static final String PROPERTY_GEO_FILE = "geo.filePath";
 }
